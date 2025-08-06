@@ -47,37 +47,40 @@ int main()
     int val = 0;
     float T = 0.0;
     float T_acc = 0.0;
+    float T_acc_2 = 0.0;
     float T_prom = 0.0;
     float V = 0;
     int i = 0;
+    int n = 0;
 
     // Time used to normalize LM35 Vout on Start-Up Response ~40ms (Ref. https://www.ti.com/mx/lit/gpn/lm35)
     sleep_ms(100);
     int32_t mask = 0;
-    uint16_t result = 0;
-    const float conversion_factor = 3.3f / (1<<12);
-    long n = 0L;
+    uint16_t raw_adc_value = 0;
+    const float conversion_factor = 3.3f / (1 << 12);
     while (true)
     {
-        // printf("Temp, 7 segment\n");
-
-        result = adc_read();
-        // printf("Raw value: %d \n", result);
-        V = result * conversion_factor;
-        // printf("Voltage: %f V\n", V);
+        raw_adc_value = adc_read();
+        V = raw_adc_value * conversion_factor;
         T = V * 100;
-        // T=(V*27)/0.706f;
-        // printf("Temperatura: %f C\n", T);
-       // T_acc += T;
-        T_acc=(T+(n*T_acc))/(n+1);
+        // Print Temperature to usb bus
+        printf("<Temp>\t%f\t%f\t%f\n", V, T, T_acc);
+        T_acc = (T + (n * T_acc)) / (n + 1);
         n++;
-        if (i == 60)
+
+        //Update the 7 segments shown temperature value every minute
+        if (((i + 1) % 60) == 0)
         {
             T_prom = T_acc;
-            printf("%f\n",T_prom);
-            i = 0;
         }
 
+        //Each 5 minutes adjust "n" the update averange for quick temperature changes
+        if ((n % 300) == 0)
+        {
+            n=1;
+        }
+
+        //Temp to 7 segment
         val = floor(T_prom * 10);
         val = val % 10;
         mask = bits[val] << START_GPIO;
