@@ -80,7 +80,7 @@ int main()
             n=1;
         }
 
-        //Temp to 7 segment
+        //Show temperature in 7 segment
         val = floor(T_prom * 10);
         val = val % 10;
         mask = bits[val] << START_GPIO;
